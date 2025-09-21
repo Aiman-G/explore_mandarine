@@ -4,3 +4,4 @@ networkx
 pyvis
 plotly
 sqlalchemy
+psycopg2-binary
