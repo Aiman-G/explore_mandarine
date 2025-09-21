@@ -17,7 +17,7 @@ def page_header(title: str, emoji: str = "📄"):
 @st.cache_data(ttl=86400) # cash for one day
 def load_data(local_csv="data/two_char_verbs_with_Tr_Pro_with_UMAP.csv",
               table_name="verbs",
-              use_local=True):
+              use_local=False):
     """
     Load verbs data:
     - If use_local=True -> always load local CSV
