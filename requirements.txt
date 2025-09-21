@@ -1,2 +1,5 @@
+
+streamlit
 networkx
 pyvis
+plotly
