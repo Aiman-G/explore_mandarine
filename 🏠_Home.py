@@ -129,7 +129,7 @@ with col1:
     st.markdown("""
     This isn't just another vocabulary app. It's a research platform.
 
-    the app used **935 of the most common two-character verbs**, extracted from the peer-reviewed:
+    the app uses **935 of the most common two-character verbs**, extracted from the peer-reviewed:
     - **A Chinese Verb Semantic Feature Dataset (CVFD)** (Springer, 2023)
 
     The network analysis provides **empirical, data-driven answers** to fundamental questions:
