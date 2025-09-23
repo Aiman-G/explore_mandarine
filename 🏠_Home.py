@@ -21,17 +21,24 @@ st.markdown("""
 """)
 
 # Use a column layout to make the GIF smaller and more integrated
-col_img, col_text = st.columns([1, 2])
-with col_img:
-    st.image("https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExbGU3aW9tMWhrYXF4ZmhmaWI5eXQ2amtlaDV6bnEwaXBnOW4wcmF6aiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TKD5CIdlhoQo2Mo/giphy.gif", use_container_width=True)
-with col_text:
-    st.markdown("""
-    Stop memorizing vocabulary lists. Start understanding the system.
-    This interactive platform uses data science and graph theory to reveal how Chinese verbs are connected, helping you learn smarter, not harder.
 
-    告别死记硬背。开始理解系统。
-    这个互动平台利用数据科学和图论，揭示汉语动词之间的联系，帮助您更聪明地学习，而不是更费力。
-    """)
+st.markdown("""
+<style>
+.row { display:flex; align-items:center; gap:.6rem; }
+.row img { width:140px; height:auto; border-radius:8px; }
+.row .txt p { margin:0 0 .35rem 0; line-height:1.35; }
+</style>
+<div class="row">
+  <img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExbGU3aW9tMWhrYXF4ZmhmaWI5eXQ2amtlaDV6bnEwaXBnOW4wcmF6aiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TKD5CIdlhoQo2Mo/giphy.gif" />
+  <div class="txt">
+    <p>Stop memorizing vocabulary lists. Start understanding the system.</p>
+    <p>This interactive platform uses data science and graph theory to reveal how Chinese verbs are connected, helping you learn smarter, not harder.</p>
+    <p>告别死记硬背。开始理解系统。</p>
+    <p>这个互动平台利用数据科学和图论，揭示汉语动词之间的联系，帮助您更聪明地学习，而不是更费力。</p>
+  </div>
+</div>
+""", unsafe_allow_html=True)
+
 
 st.markdown("---") # Horizontal line for separation
 
