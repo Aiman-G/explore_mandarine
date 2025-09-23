@@ -8,6 +8,9 @@ import os
 import streamlit.components.v1 as components
 import json
 
+
+
+
 # ----------------------------
 # Page Configuration
 # ----------------------------
@@ -136,7 +139,11 @@ T = translations[lang]
 page_header(T['page_title'], "🕸️")
 
 # --- Data Loading and Processing ---
-df = load_data()
+@st.cache_data
+def get_df():
+    return load_data()
+df = get_df()
+
 if df.empty:
     st.error(T['load_error'])
     st.stop()
@@ -175,7 +182,7 @@ with tab1:
 
     if not filtered_df.empty:
         with st.spinner(T['generating_network']):
-            G = nx.DiGraph()
+            #G = nx.DiGraph()
             for _, row in filtered_df.iterrows():
                 if row['char1'] and row['char2']:
                     G.add_edge(row['char1'], row['char2'], title=row['Verb'])

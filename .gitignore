@@ -3,4 +3,6 @@ upload_csv.py
 data
 secrets.toml
 .streamlit/secrets.toml
-3_🕸️_Character_Network copy.py
+
+1_🕸️_Character_Network(汉字网络) copy.py
+5_🎮_Playground.py
