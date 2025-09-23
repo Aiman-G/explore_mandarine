@@ -171,7 +171,7 @@ Navigate to the **Verb Network Explorer** in the sidebar to begin your discovery
 
 st.markdown("""
 ---
-**Our Vision / 我们的愿景**
+**Vision / 愿景**
 To move beyond rote memorization and provide a window into the beautiful, logical architecture of the Chinese language.
 我们的愿景是超越死记硬背，为您打开一扇窗，窥见汉语优美而逻辑严密的结构。
 """)
