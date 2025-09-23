@@ -20,13 +20,35 @@ st.markdown("""
 **利用网络的力量，解锁汉语词汇。**
 """)
 
-# Use a column layout to make the GIF smaller and more integrated
 
+# Use a column layout to make the GIF smaller and more integrated
 st.markdown("""
 <style>
 .row { display:flex; align-items:center; gap:.6rem; }
 .row img { width:140px; height:auto; border-radius:8px; }
 .row .txt p { margin:0 0 .35rem 0; line-height:1.35; }
+
+/* --- Key Notes styles --- */
+.notes { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:12px; margin: 14px 0 6px; }
+.note {
+  background:linear-gradient(180deg,#f8fbff,#ffffff);
+  border:1px solid #e9eef9;
+  border-radius:14px;
+  padding:14px 16px;
+  box-shadow:0 2px 8px rgba(0,0,0,.04);
+}
+.note .tag {
+  display:inline-flex; align-items:center; gap:.4rem;
+  font-size:.85rem; font-weight:700; padding:.2rem .5rem; border-radius:999px;
+  background:#e0e7ff; color:#1e3a8a; margin-bottom:.5rem;
+}
+.note .tag .dot { width:8px; height:8px; border-radius:999px; background:#2563eb; }
+.note p { margin:.25rem 0 .35rem; line-height:1.45; }
+
+/* Mobile responsive */
+@media (max-width: 900px){
+  .notes{ grid-template-columns: 1fr; }
+}
 </style>
 <div class="row">
   <img src="https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExbGU3aW9tMWhrYXF4ZmhmaWI5eXQ2amtlaDV6bnEwaXBnOW4wcmF6aiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TKD5CIdlhoQo2Mo/giphy.gif" />
@@ -35,6 +57,25 @@ st.markdown("""
     <p>This interactive platform uses data science and graph theory to reveal how Chinese verbs are connected, helping you learn smarter, not harder.</p>
     <p>告别死记硬背。开始理解系统。</p>
     <p>这个互动平台利用数据科学和图论，揭示汉语动词之间的联系，帮助您更聪明地学习，而不是更费力。</p>
+  </div>
+</div>
+
+<!-- === Key Notes / 重要说明 === -->
+<div class="notes">
+  <div class="note">
+    <span class="tag"><span class="dot"></span> Coverage</span>
+    <p><strong>953 two-character verbs</strong> out of <strong>1140</strong> total (the rest are single-character) — a big portion of everyday usage.</p>
+    <p><strong>在 1140 个动词中，953 个为双字动词</strong>（其余为单字动词），覆盖度高、实用性强。</p>
+  </div>
+  <div class="note">
+    <span class="tag"><span class="dot"></span> Ready to speak</span>
+    <p>Verbs are extracted with <strong>third-tone sandhi applied</strong>, so pronunciations are classroom-ready.</p>
+    <p>数据已按<strong>三声变调</strong>规则处理，<strong>直接可用于口语教学/练习</strong>。</p>
+  </div>
+  <div class="note">
+    <span class="tag"><span class="dot"></span> Tone labeling</span>
+    <p><strong>Neutral tone = 5</strong> in our data (tone pairs are like 3-4, 2-5, etc.).</p>
+    <p>本数据中<strong>轻声记作 5</strong>（声调对示例：3-4、2-5 等）。</p>
   </div>
 </div>
 """, unsafe_allow_html=True)
