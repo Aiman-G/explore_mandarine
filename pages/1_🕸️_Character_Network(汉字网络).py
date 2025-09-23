@@ -8,9 +8,6 @@ import os
 import streamlit.components.v1 as components
 import json
 
-
-
-
 # ----------------------------
 # Page Configuration
 # ----------------------------
@@ -26,13 +23,13 @@ translations = {
         'settings_header': "⚙️ Settings",
         'language_select': "Select Language",
         'controls_header': "🔍 Controls",
-        'filter_by_tone': "Filter by Tone Pattern",
+        'filter_by_class': "Filter by Verb Class",
         'highlight_char': "Select Character to Analyze",
         'no_match_warning': "No data to display for the current selection.",
         'network_header': "Interactive Character Network",
         'network_desc': """
-        This graph visualizes how characters form verbs. Use the dropdown menu at the top of the graph to filter characters by their most common verb category.
-        - **Nodes:** Single Chinese characters, colored by category.
+        This graph visualizes how characters form verbs. Use the sidebar to **filter by verb class**.
+        - **Nodes:** Single Chinese characters, colored by class.
         - **Edges:** An arrow indicates a verb is formed (e.g., A → B means the verb is 'AB').
         """,
         'generating_network': "Generating network graph...",
@@ -47,7 +44,7 @@ translations = {
         'tab_families': "🧩 Word Families",
         'tab_stats': "🔢 Character Statistics",
         'learning_pathways_header': "Data-Driven Learning Pathways",
-        'learning_pathways_desc': "Use network science to find the most important characters to learn first. This analysis is based on the currently filtered data.",
+        'learning_pathways_desc': "Use network science to find the most important characters to learn first. Analysis uses the current class filter.",
         'centrality_expander': "🔑 Most Connected Characters (Degree Centrality)",
         'centrality_desc': "**Why it matters:** These are 'super-connector' characters. Learning them first helps you recognize and form the largest number of verbs quickly.",
         'betweenness_expander': "🌉 Key Bridging Characters (Betweenness Centrality)",
@@ -70,14 +67,14 @@ translations = {
         'settings_header': "⚙️ 设置",
         'language_select': "选择语言",
         'controls_header': "🔍 控制面板",
-        'filter_by_tone': "按声调模式筛选",
+        'filter_by_class': "按动词类别筛选",
         'highlight_char': "选择要分析的汉字",
         'no_match_warning': "没有符合当前筛选条件的数据。",
         'network_header': "互动汉字网络",
         'network_desc': """
-        此图可视化了汉字如何构成动词。使用图上方的下拉菜单可以按最常见的动词类别筛选汉字。
-        - **节点:** 单个汉字，按类别着色。
-        - **边:** 箭头表示构成一个动词 (例如 A → B 意味着动词是'AB')。
+        此图展示汉字如何构成动词。请使用侧栏按**动词类别**进行筛选。
+        - **节点：** 单个汉字，按类别着色。
+        - **边：** 箭头表示构成一个动词（例如 A → B 表示“AB”）。
         """,
         'generating_network': "正在生成网络图...",
         'char_stats_header': "汉字统计浏览器",
@@ -91,17 +88,17 @@ translations = {
         'tab_families': "🧩 词族",
         'tab_stats': "🔢 汉字统计",
         'learning_pathways_header': "数据驱动的学习路径",
-        'learning_pathways_desc': "利用网络科学找出最重要的汉字，优先学习。此分析基于当前筛选的数据。",
-        'centrality_expander': "🔑 连接最多的核心字 (度中心性)",
-        'centrality_desc': "**重要性:** 这些是“超级连接词”。优先学习它们可以帮助您最快地识别和构成最多的动词。",
-        'betweenness_expander': "🌉 关键桥梁字 (中介中心性)",
-        'betweenness_desc': "**重要性:** 这些汉字如同桥梁，连接着不同的词族。掌握它们有助于将不同的词汇集联系在一起。",
+        'learning_pathways_desc': "利用网络科学找出最重要的汉字，优先学习。分析基于当前的类别筛选。",
+        'centrality_expander': "🔑 连接最多的核心字（度中心性）",
+        'centrality_desc': "**重要性：** 这些是“超级连接词”。优先学习它们有助于快速识别和构成更多动词。",
+        'betweenness_expander': "🌉 关键桥梁字（中介中心性）",
+        'betweenness_desc': "**重要性：** 这些汉字如桥梁，连接不同词族。掌握它们有助于把不同词汇集联系在一起。",
         'character_col': "汉字",
         'score_col': "得分",
         'in_degree_col': "作尾字次数",
         'out_degree_col': "作首字次数",
         'families_header': "词族浏览器",
-        'families_desc': "通过社群检测算法，我们可以发现内部联系紧密的汉字集群。将这些“词族”一起学习可能是一种有效的策略。",
+        'families_desc': "通过社群检测算法，我们可以发现内部联系紧密的汉字集群。将这些“词族”一起学习可能是一种有效策略。",
         'family_select': "选择一个词族进行探索",
         'family_members': "词族成员",
         'family_verbs_header': "该词族内的动词",
@@ -155,17 +152,18 @@ def parse_bilingual(text):
         return zh.strip(), en.strip()
     return text, text
 
+# Bilingual classification
 df[['Classification_zh', 'Classification_en']] = df['分类（Classification）'].apply(lambda x: pd.Series(parse_bilingual(x)))
 df.rename(columns={'Chinese_Verbs': 'Verb'}, inplace=True)
 classification_col_display = 'Classification_zh' if lang == 'zh' else 'Classification_en'
 
-# --- Sidebar Filters ---
+# --- Sidebar Filters (by class) ---
 st.sidebar.header(T['controls_header'])
-unique_tone_patterns = sorted(df['tone_pattern'].unique())
-selected_tones = st.sidebar.multiselect(T['filter_by_tone'], options=unique_tone_patterns, default=unique_tone_patterns)
+unique_classes = sorted(df[classification_col_display].dropna().unique())
+selected_classes = st.sidebar.multiselect(T['filter_by_class'], options=unique_classes, default=unique_classes)
 
-# Filter by tone only, as category filter is now in the graph
-filtered_df = df[df['tone_pattern'].isin(selected_tones)].copy()
+# Filter data by selected classes
+filtered_df = df[df[classification_col_display].isin(selected_classes)].copy()
 G = build_graph(filtered_df)
 
 # ----------------------------
@@ -182,11 +180,7 @@ with tab1:
 
     if not filtered_df.empty:
         with st.spinner(T['generating_network']):
-            #G = nx.DiGraph()
-            for _, row in filtered_df.iterrows():
-                if row['char1'] and row['char2']:
-                    G.add_edge(row['char1'], row['char2'], title=row['Verb'])
-
+            # Compute node sizes from degree on filtered graph
             degrees = dict(G.degree())
             min_degree, max_degree = (1, 1)
             if degrees:
@@ -201,12 +195,19 @@ with tab1:
                     for node, deg in degrees.items()
                 }
 
-            net = Network(height='750px', width='100%', notebook=False, directed=True,
-                           cdn_resources='in_line', select_menu=True, filter_menu=True)
+            net = Network(
+                height='750px', width='100%', notebook=False, directed=True,
+                cdn_resources='in_line', select_menu=True, filter_menu=True
+            )
+
+            # Add nodes, colored/grouped by class (from filtered data, fallback to full df)
             for node, size in normalized_degrees.items():
-                classification = df.loc[(df['char1'] == node) | (df['char2'] == node), classification_col_display].iloc[0]
+                # try filtered_df first; if node not present (edge case), fallback to df
+                pool = filtered_df if ((filtered_df['char1'] == node) | (filtered_df['char2'] == node)).any() else df
+                classification = pool.loc[(pool['char1'] == node) | (pool['char2'] == node), classification_col_display].iloc[0]
                 net.add_node(node, label=node, size=size, font={'size': size + 10}, group=classification)
 
+            # Add edges for filtered set
             for _, row in filtered_df.iterrows():
                 if row['char1'] and row['char2']:
                     net.add_edge(row['char1'], row['char2'], title=row['Verb'])
@@ -219,7 +220,7 @@ with tab1:
                 st.components.v1.html(source_code, height=800)
                 os.remove(file_path)
             except Exception as e:
-                st.error(T['network_error'].format(e=e))
+                st.error(f"Error displaying network graph: {e}")
     else:
         st.warning(T['no_match_warning'])
 
@@ -330,7 +331,11 @@ with tab4:
         col3.metric(T['total_verbs_metric'], G.degree(selected_char))
         
         with st.expander(T['verbs_list_expander']):
-            st.dataframe(filtered_df[(filtered_df['char1'] == selected_char) | (filtered_df['char2'] == selected_char)][['Verb', 'pinyin', 'English_Verb', classification_col_display]].drop_duplicates(), use_container_width=True)
+            st.dataframe(
+                filtered_df[
+                    (filtered_df['char1'] == selected_char) | (filtered_df['char2'] == selected_char)
+                ][['Verb', 'pinyin', 'English_Verb', classification_col_display]].drop_duplicates(),
+                use_container_width=True
+            )
     else:
         st.info(T['select_char_prompt'])
-
