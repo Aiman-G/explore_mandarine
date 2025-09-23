@@ -23,7 +23,7 @@ st.markdown("""
 # Use a column layout to make the GIF smaller and more integrated
 col_img, col_text = st.columns([1, 2])
 with col_img:
-    st.image("https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExbGU3aW9tMWhrYXF4ZmhmaWI5eXQ2amtlaDV6bnEwaXBnOW4wcmF6aiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TKD5CIdlhoQo2Mo/giphy.gif")
+    st.image("https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExbGU3aW9tMWhrYXF4ZmhmaWI5eXQ2amtlaDV6bnEwaXBnOW4wcmF6aiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TKD5CIdlhoQo2Mo/giphy.gif", use_container_width=True)
 with col_text:
     st.markdown("""
     Stop memorizing vocabulary lists. Start understanding the system.
