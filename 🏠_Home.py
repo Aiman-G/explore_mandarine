@@ -129,10 +129,10 @@ with col1:
     st.markdown("""
     This isn't just another vocabulary app. It's a research platform.
 
-    We analyze **935 of the most common two-character verbs**, extracted from the peer-reviewed:
+    the app used **935 of the most common two-character verbs**, extracted from the peer-reviewed:
     - **A Chinese Verb Semantic Feature Dataset (CVFD)** (Springer, 2023)
 
-    Our network analysis provides **empirical, data-driven answers** to fundamental questions:
+    The network analysis provides **empirical, data-driven answers** to fundamental questions:
     - "Which characters are the most important?"
     - "How are words semantically connected?"
     - "What is the most efficient path to fluency?"
@@ -142,10 +142,10 @@ with col2:
     st.markdown("""
     这不仅是另一个单词应用。这是一个研究平台。
 
-    我们分析了 **935 个最常用的双字动词**，这些动词提取自经过同行评审的：
+    APP 分析了 **935 个最常用的双字动词**，这些动词提取自经过同行评审的：
     - **《汉语动词语义特征数据库 (CVFD)》** (Springer, 2023)
 
-    我们的网络分析为一些根本性问题提供了**经验性的、数据驱动的答案**：
+    网络分析为一些根本性问题提供了**经验性的、数据驱动的答案**：
     - “哪些汉字最重要？”
     - “词语在语义上是如何连接的？”
     - “实现流利表达的最有效路径是什么？”
