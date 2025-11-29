@@ -226,4 +226,4 @@ with st.sidebar:
     Feedback? Questions? Collaboration ideas?
     有反馈？问题？合作想法？
     """)
-    st.markdown("**📧 graph.connections@gmail.com**")
+    st.markdown("**📧 aymen.omg@gmail.com**")
