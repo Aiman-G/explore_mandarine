@@ -210,12 +210,12 @@ Navigate to the **Verb Network Explorer** in the sidebar to begin your discovery
 # Optional: You can add a button that links to the main app page
 # st.page_link("pages/1_Verb_Network_Explorer.py", label="Go to the Explorer → / 前往探索平台", icon="🌐")
 
-st.markdown("""
----
-**Vision / 愿景**
-To move beyond rote memorization and provide a window into the beautiful, logical architecture of the Chinese language.
-我们的愿景是超越死记硬背，为您打开一扇窗，窥见汉语优美而逻辑严密的结构。
-""")
+# st.markdown("""
+# ---
+# **Vision / 愿景**
+# To move beyond rote memorization and provide a window into the beautiful, logical architecture of the Chinese language.
+# 我们的愿景是超越死记硬背，为您打开一扇窗，窥见汉语优美而逻辑严密的结构。
+# """)
 
 # ----------------------------
 # Support & Contact - Moved to sidebar for better layout
