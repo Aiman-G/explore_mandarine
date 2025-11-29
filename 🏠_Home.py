@@ -221,13 +221,7 @@ To move beyond rote memorization and provide a window into the beautiful, logica
 # Support & Contact - Moved to sidebar for better layout
 # ----------------------------
 with st.sidebar:
-    st.header("💝 Support / 支持")
-    st.markdown("""
-    If this tool helps you, consider supporting its development.
-    如果这个工具对您有帮助，请考虑支持它的持续开发。
-    """)
-    st.markdown("[☕ Buy Me a Coffee / 请我喝杯咖啡](https://buymeacoffee.com/selenophil)")
-    st.header("📬 Contact / 联系")
+    
     st.markdown("""
     Feedback? Questions? Collaboration ideas?
     有反馈？问题？合作想法？
