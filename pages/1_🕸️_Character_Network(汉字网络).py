@@ -61,6 +61,10 @@ translations = {
         'full_view': "Full Network",
         'focus_char_label': "Start From Character",
         'focus_depth_label': "Neighborhood Depth",
+        'network_size_label': "Canvas Size",
+        'network_size_standard': "Standard",
+        'network_size_large': "Large",
+        'network_size_xlarge': "Extra Large",
         'network_summary': "Showing {nodes} characters and {edges} verbs.",
         'full_view_note': "Full network view is denser. Use Focused Explorer for easier browsing.",
         'edge_legend': "Verb class colors",
@@ -117,6 +121,10 @@ translations = {
         'full_view': "完整网络",
         'focus_char_label': "从这个汉字开始",
         'focus_depth_label': "邻域层级",
+        'network_size_label': "画布大小",
+        'network_size_standard': "标准",
+        'network_size_large': "大",
+        'network_size_xlarge': "超大",
         'network_summary': "当前显示 {nodes} 个汉字，{edges} 个动词。",
         'full_view_note': "完整网络会更密集。更适合学习者浏览的是“聚焦探索”。",
         'edge_legend': "动词类别颜色",
@@ -474,6 +482,15 @@ class_color_map = make_class_color_map(unique_classes)
 def render_network_html(net, height):
     components.html(net, height=height)
 
+
+def get_network_heights(size_label, T):
+    height_map = {
+        T['network_size_standard']: ('760px', 820),
+        T['network_size_large']: ('920px', 980),
+        T['network_size_xlarge']: ('1100px', 1160),
+    }
+    return height_map.get(size_label, ('920px', 980))
+
 # ----------------------------
 # Main Content Tabs
 # ----------------------------
@@ -489,13 +506,25 @@ with tab1:
     if not filtered_df.empty:
         ranked_chars = sorted(G.nodes(), key=lambda node: (-G.degree(node), node))
         default_focus_char = ranked_chars[0] if ranked_chars else None
-        control_col1, control_col2, control_col3 = st.columns([1.1, 1.8, 1.1])
+        control_col1, control_col2, control_col3, control_col4 = st.columns([1.05, 1.55, 1.0, 1.25])
 
         with control_col1:
             view_mode = st.radio(
                 T['network_view_mode'],
                 options=[T['focused_view'], T['full_view']],
                 horizontal=True,
+            )
+
+        default_canvas_size = T['network_size_xlarge'] if view_mode == T['full_view'] else T['network_size_large']
+        with control_col4:
+            canvas_size = st.select_slider(
+                T['network_size_label'],
+                options=[
+                    T['network_size_standard'],
+                    T['network_size_large'],
+                    T['network_size_xlarge'],
+                ],
+                value=default_canvas_size,
             )
 
         focus_char = None
@@ -519,6 +548,7 @@ with tab1:
 
         network_df = get_focus_network_df(filtered_df, focus_char, focus_depth) if view_mode == T['focused_view'] else filtered_df
         network_graph = build_graph(network_df, classification_col_display)
+        canvas_height, component_height = get_network_heights(canvas_size, T)
         visible_class_colors = {
             cls: class_color_map[cls]
             for cls in sorted(network_df[classification_col_display].dropna().unique())
@@ -536,11 +566,11 @@ with tab1:
                 T['node_hover_starts'],
                 T['node_hover_ends'],
                 T['node_hover_total'],
-                '750px',
+                canvas_height,
             )
 
             try:
-                render_network_html(network_html, height=800)
+                render_network_html(network_html, height=component_height)
             except Exception as e:
                 st.error(f"Error displaying network graph: {e}")
     else:
