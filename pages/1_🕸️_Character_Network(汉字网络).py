@@ -1,10 +1,35 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from utils import page_header, load_data, language_selector
+from utils import page_header, load_data
 from pyvis.network import Network
 import networkx as nx
 import streamlit.components.v1 as components
+
+try:
+    from utils import language_selector
+except ImportError:
+    def language_selector(
+        header: str = "⚙️ Settings / 设置",
+        label: str = "Select Language / 选择语言",
+    ):
+        lang_options = {"English": "en", "中文 (Chinese)": "zh"}
+        display_by_code = {code: text for text, code in lang_options.items()}
+        state_key = "app_language"
+        widget_key = "_app_language_widget"
+
+        if state_key not in st.session_state:
+            st.session_state[state_key] = "en"
+        st.session_state[widget_key] = display_by_code.get(st.session_state[state_key], "English")
+
+        def sync_language():
+            selected = st.session_state.get(widget_key, "English")
+            st.session_state[state_key] = lang_options.get(selected, "en")
+
+        st.sidebar.header(header)
+        st.sidebar.radio(label, options=list(lang_options.keys()), key=widget_key, horizontal=True, on_change=sync_language)
+        sync_language()
+        return st.session_state[state_key]
 
 # ----------------------------
 # Page Configuration
