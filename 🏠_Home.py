@@ -136,22 +136,22 @@ feature_desc_en = """
 1.  **The Interactive Network (`🌐 Network Graph`)**
     Visualize the hidden connections between verbs. Each character is a node, and each verb is a link. See the core "hub" characters that form the backbone of the language.
 
-2.  **Data-Driven Learning Paths (`📖 Learning Pathways`)**
-    Don't guess what to learn next. Our algorithms identify the most powerful "super-connector" characters to learn first for maximum efficiency.
+2.  **Mission Mode (`🎮 Mission Mode`)**
+    Practice through short browser-based challenges. Build verbs, identify tone pairs, get instant feedback, and replay weak items.
 
-3.  **Discover Thematic Word Families (`🧩 Word Families`)**
-    Automatically find clusters of characters that belong together. Learn related vocabulary in context, the way the language is actually structured.
+3.  **Teacher Tools (`🎯 Coverage Planner`, `🗂️ Practice Set Builder`)**
+    Turn the dataset into practical lesson material: choose high-coverage characters, export starter sets, and build focused drills quickly.
 """
 
 feature_desc_zh = """
 1.  **互动网络图 (`🌐 网络图`)**
     可视化动词间的隐藏联系。每个汉字是一个节点，每个动词是一条连接线。一眼看清构成语言核心的“枢纽”汉字。
 
-2.  **数据驱动的学习路径 (`📖 学习路径`)**
-    无需猜测下一步该学什么。我们的算法能识别出最应该优先学习的“超级连接字”，实现最高效率的学习。
+2.  **任务模式 (`🎮 任务模式`)**
+    通过短小的浏览器练习来学习。组词、识别声调模式、获得即时反馈，并重做薄弱项。
 
-3. 探索主题词族 (`🧩 词族`)
-    自动发现意义上相关的汉字集群。按照语言真实的结构，在语境中学习相关词汇。
+3.  **教师工具 (`🎯 覆盖规划`, `🗂️ 练习清单生成`)**
+    把数据集快速变成教学材料：选择高覆盖率汉字、导出起步词表、生成聚焦练习。
 """
 
 st.markdown(feature_desc_en)
@@ -204,7 +204,8 @@ st.markdown("""
 **准备好改变你学习或教授汉语的方式了吗？**
 
 Navigate to the **Verb Network Explorer** in the sidebar to begin your discovery.
-请使用侧边栏导航到 **动词网络探索者** 开始您的探索。
+Or jump into **Mission Mode** for guided practice.
+请使用侧边栏导航到 **动词网络探索者** 开始探索，或进入 **任务模式** 进行练习。
 """)
 
 # Optional: You can add a button that links to the main app page

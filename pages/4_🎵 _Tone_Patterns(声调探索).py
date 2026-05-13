@@ -148,6 +148,8 @@ PAGE_FALLBACKS = {
         'character_col': "Character",
         'connections_col': "Connections",
         'tab_network': "🎯 Tone-Pair Explorer",
+        'loading_data': "Loading tone explorer data...",
+        'loading_network': "Rendering focused tone network...",
     },
     'zh': {
         'pair_priority_header': "最值得先学的声调模式",
@@ -168,6 +170,8 @@ PAGE_FALLBACKS = {
         'character_col': "汉字",
         'connections_col': "连接数",
         'tab_network': "🎯 声调模式探索",
+        'loading_data': "正在加载声调探索数据...",
+        'loading_network': "正在渲染聚焦声调网络...",
     },
 }
 
@@ -187,7 +191,8 @@ page_header(T['page_title'], "🎵")
 def get_df():
     return load_data()
 
-df = get_df()
+with st.spinner(T['loading_data']):
+    df = get_df()
 if df.empty:
     st.error(T['load_error'])
     st.stop()
@@ -455,8 +460,8 @@ def build_pair_network_html(edge_subset: pd.DataFrame, edge_color: str):
 # ----------------------------
 # Tabs
 # ----------------------------
-TAB2, TAB3, TAB4, TAB5, TAB6, TAB9 = st.tabs([
-    T['tab_network'], T['tab_pathways'], T['tab_families'], T['tab_minpairs'], T['tab_charprof'], T['tab_curriculum']
+TAB2, TAB5, TAB6 = st.tabs([
+    T['tab_network'], T['tab_minpairs'], T['tab_charprof']
 ])
 
 # ----------------------------
@@ -550,146 +555,11 @@ with TAB2:
                 )
             )
             try:
-                pair_html = build_pair_network_html(visible_pair_df, pair_color.get(focus_pair, '#6366f1'))
-                components.html(pair_html, height=680)
+                with st.spinner(T['loading_network']):
+                    pair_html = build_pair_network_html(visible_pair_df, pair_color.get(focus_pair, '#6366f1'))
+                    components.html(pair_html, height=680)
             except Exception as e:
                 st.error(f"Error displaying graph: {e}")
-
-# ----------------------------
-# TAB 3 – Tone Pathways
-# ----------------------------
-with TAB3:
-    st.header(T['tab_pathways'])
-    with st.expander(T['help_pathways_title'], expanded=False):
-        st.markdown(T['help_pathways_body'])
-
-    st.caption(T['path_desc'])
-    if edge_df_f.empty:
-        st.warning(T['no_match_warning'])
-    else:
-        # Build subgraph with only filtered edges for pathfinding preference
-        Gp = nx.DiGraph()
-        for _, r in edge_df_f.iterrows():
-            Gp.add_edge(r['char1'], r['char2'], tone_pair=r['tone_pattern'], src_tone=int(r['src_tone']), dst_tone=int(r['dst_tone']),
-                        weight=int(r['weight']), verb=r['Verb'], pinyin=r['pinyin'], english=r['English_Verb'])
-        all_chars = sorted(list(set(Gp.nodes())))
-        col1, col2, col3, col4 = st.columns([1.2,1,1,1])
-        with col1:
-            tgt_pair = st.selectbox(T['path_target_pair'], options=selected_pairs or all_pairs)
-        with col2:
-            start_char = st.selectbox(T['path_start_char'], options=['']+all_chars)
-        with col3:
-            k = st.number_input(T['path_len'], min_value=3, max_value=12, value=6, step=1)
-        with col4:
-            seed = st.number_input('Seed', min_value=0, max_value=9999, value=42, step=1)
-
-        def tone_path(G, start, target_pair, k=6, seed=42):
-            if not start or start not in G:
-                return []
-            rng = np.random.default_rng(seed)
-            path = [start]
-            cur = start
-            visited = {cur}
-            tp_src, tp_dst = target_pair.split('-')
-            tp_src, tp_dst = int(tp_src), int(tp_dst)
-            for _ in range(k-1):
-                candidates = []
-                for _, v, d in G.out_edges(cur, data=True):
-                    if v in visited: continue
-                    score = 0.0
-                    if d.get('src_tone')==tp_src and d.get('dst_tone')==tp_dst:
-                        score += 3.0
-                    score += 0.5*np.log1p(d.get('weight',1))
-                    score += 0.2*G.degree(v)
-                    candidates.append((score + 0.01*rng.random(), v))
-                if not candidates:
-                    break
-                candidates.sort(reverse=True)
-                cur = candidates[0][1]
-                visited.add(cur)
-                path.append(cur)
-            return path
-
-        if st.button(T['path_make'], use_container_width=False) and start_char:
-            chain = tone_path(Gp, start_char, tgt_pair, k=int(k), seed=int(seed))
-            if len(chain) < 2:
-                st.info(T['no_match_warning'])
-            else:
-                # Collect edges along the path
-                rows = []
-                for a,b in zip(chain[:-1], chain[1:]):
-                    d = Gp.get_edge_data(a,b)
-                    if d:
-                        rows.append({'char1':a,'char2':b,'tone_pair':d.get('tone_pair'), 'Verb':d.get('verb'), 'pinyin':d.get('pinyin'), 'English_Verb':d.get('english')})
-                path_df = pd.DataFrame(rows)
-                st.subheader(T['verbs_on_path'])
-                st.dataframe(path_df, use_container_width=True)
-                if not path_df.empty:
-                    st.download_button(T['download_csv'], path_df.to_csv(index=False).encode('utf-8'), file_name='tone_path.csv', mime='text/csv')
-
-# ----------------------------
-# TAB 4 – Tone in Families
-# ----------------------------
-with TAB4:
-    st.header(T['tab_families'])
-    with st.expander(T['help_families_title'], expanded=False):
-        st.markdown(T['help_families_body'])
-
-    st.caption(T['families_desc'])
-
-    if G_full.number_of_nodes() <= 1:
-        st.warning(T['no_match_warning'])
-    else:
-        # communities on the full graph for stability
-        comms = list(nx.community.greedy_modularity_communities(G_full.to_undirected()))
-        comms = [c for c in comms if len(c) >= 6]
-        if not comms:
-            st.warning(T['no_match_warning'])
-        else:
-            fam_options = {f"Family {i+1} ({len(c)} chars)": i for i,c in enumerate(comms[:20])}
-            key = st.selectbox(T['family_select'], options=list(fam_options.keys()))
-            idx = fam_options[key]
-            C = comms[idx]
-            st.info(f"**{T['family_members']}:** {', '.join(list(C)[:50])}{' …' if len(C)>50 else ''}")
-
-            # Subset edges to intra-community + current tone filters
-            sub = edge_df.copy()
-            sub = sub[sub['char1'].isin(C) & sub['char2'].isin(C)]
-            mask2 = sub['tone_pattern'].isin(selected_pairs) & sub['src_tone'].isin(selected_src) & sub['dst_tone'].isin(selected_dst)
-            sub = sub.loc[mask2]
-
-            if sub.empty:
-                st.warning(T['no_match_warning'])
-            else:
-                # Tone distribution
-                dist = sub.groupby('tone_pattern', as_index=False)['weight'].sum().sort_values('weight', ascending=False)
-                st.subheader(T['tone_distribution'])
-                fig = px.bar(dist, x='weight', y='tone_pattern', orientation='h', text='weight', color='tone_pattern', color_discrete_map=pair_color)
-                fig.update_layout(yaxis={'categoryorder':'total ascending'})
-                st.plotly_chart(fig, use_container_width=True)
-
-                # Intra-community graph
-                net_fam = Network(height='650px', width='100%', notebook=False, directed=True, cdn_resources='in_line')
-                # Node sizing by degree within community
-                Gc = nx.DiGraph()
-                for _, r in sub.iterrows():
-                    Gc.add_edge(r['char1'], r['char2'], tone_pair=r['tone_pattern'], weight=int(r['weight']), title=f"{r['Verb']} ({r['pinyin']})")
-                degs = dict(Gc.degree())
-                for n in Gc.nodes():
-                    sz = 12 + 20*(degs.get(n,0)/max(1,max(degs.values())))
-                    net_fam.add_node(n, label=n, size=sz, font={'size': int(sz)+6})
-                for u,v,d in Gc.edges(data=True):
-                    color = pair_color.get(d.get('tone_pair'), '#cccccc')
-                    net_fam.add_edge(u,v, title=d.get('title'), color=color, width=1+d.get('weight',1))
-                try:
-                    file_path_fam = 'tone_family.html'
-                    net_fam.save_graph(file_path_fam)
-                    with open(file_path_fam, 'r', encoding='utf-8') as f:
-                        components.html(f.read(), height=600)
-                    if os.path.exists(file_path_fam):
-                        os.remove(file_path_fam)
-                except Exception as e:
-                    st.error(f"Error displaying family graph: {e}")
 
 # ----------------------------
 # TAB 5 – Minimal Tone-Contrast Sets
@@ -788,53 +658,3 @@ with TAB6:
             sub2 = df[(df['char2']==sel_char) & (df['dst_tone']==toneY)]
             st.caption(T['show_any_to_dst'].replace('X', str(toneY)))
             st.dataframe(sub2[['Verb','pinyin','English_Verb','tone_pattern']], use_container_width=True)
-
-# ----------------------------
-# TAB 9 – Curriculum Builder
-# ----------------------------
-with TAB9:
-    st.header(T['tab_curriculum'])
-    with st.expander(T['help_curriculum_title'], expanded=False):
-        st.markdown(T['help_curriculum_body'])
-
-    st.caption(T['curriculum_desc'])
-
-    if edge_df_f.empty:
-        st.warning(T['no_match_warning'])
-    else:
-        colA, colB, colC = st.columns([1.3,1,1])
-        with colA:
-            choose_pairs = st.multiselect(T['deck_pairs'], options=selected_pairs or all_pairs, default=selected_pairs or all_pairs)
-        with colB:
-            deck_size = st.number_input(T['deck_size'], min_value=10, max_value=200, value=40, step=5)
-        with colC:
-            weighting = st.selectbox(T['weighting'], options=[T['weight_degree'], T['weight_uniform']])
-
-        # Build candidate pool
-        pool = edge_df_f[edge_df_f['tone_pattern'].isin(choose_pairs)].copy()
-        if pool.empty:
-            st.warning(T['no_match_warning'])
-        else:
-            # Weighting
-            if weighting == T['weight_degree']:
-                # degree on filtered graph
-                Gc = nx.DiGraph()
-                for _, r in pool.iterrows():
-                    Gc.add_edge(r['char1'], r['char2'])
-                deg = {n: Gc.degree(n) for n in Gc.nodes()}
-                pool['deg_score'] = pool['char1'].map(deg).fillna(0) + pool['char2'].map(deg).fillna(0)
-                pool['score'] = 1 + np.log1p(pool['weight']) + 0.5*pool['deg_score']
-            else:
-                pool['score'] = 1.0
-            # Sample without replacement, proportional to score
-            pool = pool.sample(frac=1, random_state=42)  # shuffle
-            probs = pool['score'] / pool['score'].sum()
-            k = min(int(deck_size), len(pool))
-            chosen_idx = np.random.default_rng(42).choice(pool.index, size=k, replace=False, p=probs)
-            deck = pool.loc[chosen_idx, ['Verb','pinyin','English_Verb','tone_pattern','char1','char2']].copy()
-            # Nice order: group by tone pair
-            deck = deck.sort_values(['tone_pattern']).reset_index(drop=True)
-
-            st.subheader(T['deck_table'])
-            st.dataframe(deck, use_container_width=True)
-            st.download_button(T['download_csv'], deck.to_csv(index=False).encode('utf-8'), file_name='tone_deck.csv', mime='text/csv')

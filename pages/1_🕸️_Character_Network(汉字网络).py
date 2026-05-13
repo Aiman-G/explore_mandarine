@@ -43,6 +43,7 @@ translations = {
     'en': {
         'page_title': "Character Hub",
         'load_error': "Data could not be loaded. Please ensure the data file is available.",
+        'loading_data': "Loading character network data...",
         'settings_header': "⚙️ Settings",
         'language_select': "Select Language",
         'controls_header': "🔍 Controls",
@@ -103,6 +104,7 @@ translations = {
     'zh': {
         'page_title': "汉字中心",
         'load_error': "无法加载数据。请确保数据文件可用。",
+        'loading_data': "正在加载汉字网络数据...",
         'settings_header': "⚙️ 设置",
         'language_select': "选择语言",
         'controls_header': "🔍 控制面板",
@@ -450,7 +452,9 @@ page_header(T['page_title'], "🕸️")
 @st.cache_data(show_spinner=False)
 def get_df():
     return load_data()
-df = get_df()
+
+with st.spinner(T['loading_data']):
+    df = get_df()
 
 if df.empty:
     st.error(T['load_error'])

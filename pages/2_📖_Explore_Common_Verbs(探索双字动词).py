@@ -42,6 +42,7 @@ translations = {
     'en': {
         'page_title': "Explore Two-Character Verbs",
         'load_error': "Data could not be loaded. Please ensure the data file is available.",
+        'loading_data': "Loading verb explorer data...",
         'settings_header': "⚙️ Settings",
         'language_select': "Select Language",
         'controls_header': "🔍 Controls",
@@ -78,6 +79,7 @@ translations = {
     'zh': {
         'page_title': "探索双字动词",
         'load_error': "无法加载数据。请确保数据文件可用。",
+        'loading_data': "正在加载动词探索数据...",
         'settings_header': "⚙️ 设置",
         'language_select': "选择语言",
         'controls_header': "🔍 控制面板",
@@ -123,7 +125,8 @@ page_header(T['page_title'], "📖")
 # ----------------------------
 # Load and Process Data
 # ----------------------------
-df = load_data()
+with st.spinner(T['loading_data']):
+    df = load_data()
 
 if df.empty:
     st.error(T['load_error'])

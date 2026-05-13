@@ -139,6 +139,7 @@ PAGE_FALLBACKS = {
         "starter_pack_coverage": "Verb coverage",
         "starter_pack_preview": "Suggested starter verbs",
         "starter_pack_download": "Download starter pack (CSV)",
+        "loading_data": "Loading coach data...",
     },
     "zh": {
         "tab_overview": "🚀 快速开始",
@@ -161,6 +162,7 @@ PAGE_FALLBACKS = {
         "starter_pack_coverage": "动词覆盖率",
         "starter_pack_preview": "推荐起步动词",
         "starter_pack_download": "下载起步清单（CSV）",
+        "loading_data": "正在加载教学助理数据...",
     },
 }
 
@@ -180,7 +182,8 @@ page_header(T["title"], "💡")
 def get_df():
     return load_data()
 
-df = get_df()
+with st.spinner(T["loading_data"]):
+    df = get_df()
 if df is None or df.empty:
     st.error(T["load_error"])
     st.stop()
@@ -260,12 +263,10 @@ def build_starter_pack(edge_df: pd.DataFrame, k_max: int):
 # =========================
 # Tabs
 # =========================
-TAB_OV, TAB_HM, TAB_COV, TAB_DECK, TAB_PIT = st.tabs([
+TAB_OV, TAB_COV, TAB_DECK = st.tabs([
     T["tab_overview"],
-    T["tab_heatmap"],
     T["tab_coverage"],
     T["tab_deck"],
-    T["tab_pitfalls"],
 ])
 
 # =========================
@@ -382,40 +383,7 @@ with TAB_OV:
         if "final_2" in df.columns: freq_chart(df["final_2"], T["final_2"])
 
 # =========================
-# Tab 2 — Tone Heatmap
-# =========================
-with TAB_HM:
-    st.header(T["hm_header"])
-    with st.expander(T["hm_help_title"], expanded=False):
-        st.markdown(T["hm_help_body"])
-
-    if edge_df.empty or "src_tone" not in edge_df.columns or "dst_tone" not in edge_df.columns:
-        st.info(T["no_data"] if "no_data" in T else "No data.")
-    else:
-        cats = [T["hm_all"]]
-        if classification_col_display and classification_col_display in edge_df.columns:
-            cats += sorted(edge_df[classification_col_display].dropna().unique().tolist())
-        cat_choice = st.selectbox(T["hm_cat"], options=cats)
-        sub = edge_df.copy()
-        if cat_choice != T["hm_all"] and classification_col_display:
-            sub = sub[sub[classification_col_display] == cat_choice]
-
-        # 5×5 matrix src→dst
-        idx = pd.MultiIndex.from_product([range(1,6), range(1,6)], names=["src_tone","dst_tone"])
-        mat = (
-            sub.dropna(subset=["src_tone","dst_tone"])
-               .groupby(["src_tone","dst_tone"]).size()
-               .reindex(idx, fill_value=0).unstack(fill_value=0)
-        )
-        fig_hm = px.imshow(
-            mat.values,
-            x=[1,2,3,4,5], y=[1,2,3,4,5], text_auto=True, aspect="equal",
-            labels=dict(x="dst tone", y="src tone", color="count"),
-        )
-        st.plotly_chart(fig_hm, use_container_width=True)
-
-# =========================
-# Tab 3 — Coverage Optimizer
+# Tab 2 — Coverage Optimizer
 # =========================
 with TAB_COV:
     st.header(T["cov_header"])
@@ -471,7 +439,7 @@ with TAB_COV:
         )
 
 # =========================
-# Tab 4 — Deck Builder
+# Tab 3 — Deck Builder
 # =========================
 with TAB_DECK:
     st.header(T["deck_header"])
@@ -539,42 +507,3 @@ with TAB_DECK:
                 file_name="study_deck.csv",
                 mime="text/csv"
             )
-
-# =========================
-# Tab 5 — Polyphony & Pitfalls
-# =========================
-with TAB_PIT:
-    st.header(T["pit_header"])
-    with st.expander(T["pit_help_title"], expanded=False):
-        st.markdown(T["pit_help_body"])
-
-    if df.empty:
-        st.info(T["no_data"] if "no_data" in T else "No data.")
-    else:
-        col1, col2 = st.columns(2)
-
-        # Polyphony: distinct tone roles per character
-        if "src_tone" in df.columns and "dst_tone" in df.columns:
-            poly_src = df.groupby("char1")["src_tone"].nunique(dropna=True).rename("src_var")
-            poly_dst = df.groupby("char2")["dst_tone"].nunique(dropna=True).rename("dst_var")
-            poly = pd.concat([poly_src, poly_dst], axis=1).fillna(0).astype(int)
-            poly["polyphony"] = poly["src_var"] + poly["dst_var"]
-            poly_chars = poly[poly["polyphony"] >= 3].sort_values("polyphony", ascending=False).head(40)
-            with col1:
-                st.caption(T["pit_poly_caption"])
-                st.dataframe(poly_chars, use_container_width=True, height=360)
-        else:
-            with col1:
-                st.info(T["no_data"] if "no_data" in T else "No data.")
-
-        # 3→3 sandhi list
-        with col2:
-            if "tone_pattern" in df.columns:
-                sandhi = df[df["tone_pattern"] == "3-3"][["Verb","pinyin","English_Verb"]].drop_duplicates().head(80)
-                st.caption(T["pit_sandhi_caption"])
-                if sandhi.empty:
-                    st.info(T["no_data"] if "no_data" in T else "No data.")
-                else:
-                    st.dataframe(sandhi, use_container_width=True, height=360)
-            else:
-                st.info(T["no_data"] if "no_data" in T else "No data.")
