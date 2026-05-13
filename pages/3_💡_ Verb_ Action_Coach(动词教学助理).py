@@ -101,7 +101,7 @@ page_header(T["title"], "💡")
 # =========================
 # Load + prepare data
 # =========================
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def get_df():
     return load_data()
 
@@ -153,6 +153,35 @@ edge_cols = [
 edge_cols = [c for c in edge_cols if c in df.columns]
 edge_df = df[edge_cols].dropna(subset=["char1","char2"]).drop_duplicates()
 
+
+@st.cache_data(show_spinner=False)
+def build_starter_pack(edge_df: pd.DataFrame, k_max: int):
+    edges = edge_df[["char1", "char2", "Verb", "pinyin", "English_Verb"]].drop_duplicates().reset_index(drop=True)
+    edges["edge_id"] = edges["char1"] + "|" + edges["char2"]
+
+    uncovered = set(edges["edge_id"])
+    selected = []
+
+    while len(selected) < k_max and uncovered:
+        counts = {}
+        for _, row in edges.iterrows():
+            edge_id = row["edge_id"]
+            if edge_id not in uncovered:
+                continue
+            for ch in (row["char1"], row["char2"]):
+                counts[ch] = counts.get(ch, 0) + 1
+        if not counts:
+            break
+        best = max(counts.items(), key=lambda kv: kv[1])[0]
+        selected.append(best)
+        newly_covered = edges[(edges["char1"] == best) | (edges["char2"] == best)]["edge_id"].tolist()
+        uncovered -= set(newly_covered)
+
+    covered = set(edges["edge_id"]) - uncovered
+    covered_verbs = edges[edges["edge_id"].isin(covered)].drop(columns=["edge_id"]).reset_index(drop=True)
+    coverage_pct = 100 * len(covered) / max(1, len(edges))
+    return selected, coverage_pct, covered_verbs
+
 # =========================
 # Tabs
 # =========================
@@ -172,7 +201,64 @@ with TAB_OV:
     with st.expander(T["ov_help_title"], expanded=False):
         st.markdown(T["ov_help_body"])
 
+    total_verbs = int(len(edge_df))
+    top_tone = "—"
+    if "tone_pattern" in edge_df.columns and not edge_df["tone_pattern"].dropna().empty:
+        top_tone = edge_df["tone_pattern"].value_counts().idxmax()
+    top_category = "—"
+    if classification_col_display and classification_col_display in df.columns and not df[classification_col_display].dropna().empty:
+        top_category = df[classification_col_display].value_counts().idxmax()
+
+    metric1, metric2, metric3 = st.columns(3)
+    metric1.metric(T["insight_total_verbs"], total_verbs)
+    metric2.metric(T["insight_top_tone"], top_tone)
+    metric3.metric(T["insight_top_category"], top_category)
+
+    st.subheader(T["quickstart_header"])
+    card_col1, card_col2 = st.columns(2)
+    with card_col1:
+        st.markdown(
+            f"""
+            <div style="background:#f8fafc;border:1px solid #dbeafe;border-radius:16px;padding:16px 18px;height:100%;">
+              <div style="font-weight:700;font-size:1.02rem;margin-bottom:0.45rem;color:#1d4ed8;">{T["learner_card_title"]}</div>
+              <div style="line-height:1.55;color:#0f172a;">{T["learner_card_body"]}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    with card_col2:
+        st.markdown(
+            f"""
+            <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:16px;padding:16px 18px;height:100%;">
+              <div style="font-weight:700;font-size:1.02rem;margin-bottom:0.45rem;color:#c2410c;">{T["teacher_card_title"]}</div>
+              <div style="line-height:1.55;color:#431407;">{T["teacher_card_body"]}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.divider()
+    st.subheader(T["starter_pack_header"])
+    st.caption(T["starter_pack_desc"])
+    starter_size = st.slider(T["starter_pack_size"], min_value=5, max_value=25, value=8, step=1)
+    starter_chars, starter_coverage, starter_verbs = build_starter_pack(edge_df, starter_size)
+    pack_col1, pack_col2 = st.columns([1, 1.2])
+    with pack_col1:
+        st.metric(T["starter_pack_coverage"], f"{starter_coverage:.1f}%")
+        st.write("**" + T["starter_pack_chars"] + "**")
+        st.write("、".join(starter_chars) if lang == "zh" else ", ".join(starter_chars))
+    with pack_col2:
+        st.write("**" + T["starter_pack_preview"] + "**")
+        st.dataframe(starter_verbs.head(20), use_container_width=True, hide_index=True, height=280)
+    st.download_button(
+        T["starter_pack_download"],
+        starter_verbs.to_csv(index=False).encode("utf-8"),
+        file_name="starter_pack.csv",
+        mime="text/csv",
+    )
+
     # Category Distribution
+    st.divider()
     st.subheader(T["cat_dist"])
     st.caption(T["cat_desc"])
     if classification_col_display and classification_col_display in df.columns:

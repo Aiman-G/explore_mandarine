@@ -10,7 +10,7 @@ TRANSLATIONS = {
         'filter_dst_tone': "Destination Tone",
         'filter_class': "Classification",
         'legend_header': "Tone Legend",
-        'tab_network': "🌐 Tone Network",
+        'tab_network': "🎯 Tone-Pair Explorer",
         'tab_pathways': "🧭 Tone Pathways",
         'tab_families': "🗂️ Tone in Families",
         'tab_minpairs': "🧪 Minimal Tone-Contrast Sets",
@@ -20,11 +20,28 @@ TRANSLATIONS = {
         'generating_network': "Generating network graph...",
         'fade_unselected': "Fade unselected tones (instead of hiding)",
         'network_desc': """
-        Explore the character network through tone patterns.
-        - **Nodes:** Characters (size by degree).
-        - **Edges:** Verbs (A→B means 'AB'), **colored by tone pair (src→dst)**, thickness by frequency.
-        Use the filters to focus on specific tone transitions.
+        Learn tone patterns through one focused tone pair at a time.
+        - Start with the **most common tone pairs** in the current filter.
+        - Pick one tone pair, inspect its **example verbs**, then explore a **small local network**.
+        - Use the network only as support for vocabulary practice, not as the main task.
         """,
+        'pair_priority_header': "Most Useful Tone Pairs",
+        'pair_priority_desc': "Start with the most frequent tone transitions in the current filter.",
+        'pair_focus': "Focus Tone Pair",
+        'pair_count_metric': "Verbs",
+        'pair_char_count_metric': "Characters",
+        'pair_top_class_metric': "Main Class",
+        'pair_examples_header': "High-Value Examples",
+        'pair_examples_desc': "These verbs are good starting examples for the selected tone pair.",
+        'pair_characters_header': "Best Starter Characters",
+        'pair_characters_desc': "These characters connect to the most verbs inside the selected tone pair.",
+        'pair_network_header': "Focused Tone-Pair Network",
+        'pair_network_desc': "Explore a small neighborhood instead of the full graph.",
+        'pair_focus_char': "Center Character",
+        'pair_focus_depth': "Neighborhood Depth",
+        'network_summary': "Showing {nodes} characters and {edges} verbs for tone pair {pair}.",
+        'character_col': "Character",
+        'connections_col': "Connections",
         'path_target_pair': "Target Tone Pair",
         'path_start_char': "Start Character",
         'path_len': "Path length",
@@ -141,7 +158,7 @@ TRANSLATIONS = {
         'filter_dst_tone': "尾字声调",
         'filter_class': "动词类别",
         'legend_header': "声调图例",
-        'tab_network': "🌐 声调网络图",
+        'tab_network': "🎯 声调模式探索",
         'tab_pathways': "🧭 学习路径",
         'tab_families': "🗂️ 词族中的声调",
         'tab_minpairs': "🧪 最小对立组",
@@ -151,11 +168,28 @@ TRANSLATIONS = {
         'generating_network': "正在生成网络图...",
         'fade_unselected': "将未选声调淡化显示（不隐藏）",
         'network_desc': """
-        从声调视角探索汉字网络。
-        - **节点：** 汉字（大小=度数）。
-        - **边：** 动词（A→B 表示“AB”），**按声调模式着色**，粗细与出现频次相关。
-        使用筛选器来聚焦某些声调转移。
+        一次聚焦一个声调模式来学习会更有效。
+        - 先看当前筛选下**最常见的声调模式**。
+        - 选定一个模式后，查看**核心例词**，再浏览一个**小范围网络**。
+        - 网络只是辅助理解词汇关系，不应成为主要学习负担。
         """,
+        'pair_priority_header': "最值得先学的声调模式",
+        'pair_priority_desc': "先从当前筛选中最常见的声调转移开始。",
+        'pair_focus': "聚焦声调模式",
+        'pair_count_metric': "动词数",
+        'pair_char_count_metric': "汉字数",
+        'pair_top_class_metric': "主要类别",
+        'pair_examples_header': "高价值例词",
+        'pair_examples_desc': "这些动词适合作为该声调模式的起步例词。",
+        'pair_characters_header': "最佳起步汉字",
+        'pair_characters_desc': "这些汉字在所选声调模式中连接的动词最多。",
+        'pair_network_header': "聚焦式声调网络",
+        'pair_network_desc': "不要看整张大网，只看一个小范围邻域更适合学习。",
+        'pair_focus_char': "中心汉字",
+        'pair_focus_depth': "邻域层级",
+        'network_summary': "当前展示声调模式 {pair} 下的 {nodes} 个汉字、{edges} 个动词。",
+        'character_col': "汉字",
+        'connections_col': "连接数",
         'path_target_pair': "目标声调模式",
         'path_start_char': "起始汉字",
         'path_len': "路径长度",

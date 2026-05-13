@@ -112,7 +112,7 @@ page_header(T['page_title'], "🎵")
 # ----------------------------
 # Data Loading & Preprocessing
 # ----------------------------
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def get_df():
     return load_data()
 
@@ -176,7 +176,7 @@ edge_df = edge_df.groupby(['char1','char2','tone_pattern','src_tone','dst_tone']
 })
 
 # Build graph
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def build_graph(edge_df: pd.DataFrame):
     G = nx.DiGraph()
     for _, r in edge_df.iterrows():
@@ -228,6 +228,159 @@ palette = ["#1f77b4","#ff7f0e","#2ca02c","#d62728","#9467bd","#8c564b","#e377c2"
 unique_pairs = sorted(edge_df['tone_pattern'].dropna().unique())
 pair_color = {tp: palette[i % len(palette)] for i, tp in enumerate(unique_pairs)}
 
+
+def hex_to_rgba(hex_color, alpha):
+    hex_color = hex_color.lstrip('#')
+    if len(hex_color) != 6:
+        return f"rgba(148, 163, 184, {alpha})"
+    r = int(hex_color[0:2], 16)
+    g = int(hex_color[2:4], 16)
+    b = int(hex_color[4:6], 16)
+    return f"rgba({r}, {g}, {b}, {alpha})"
+
+
+@st.cache_data(show_spinner=False)
+def get_focus_network_df(edge_subset: pd.DataFrame, focus_char: str, depth: int):
+    if edge_subset.empty or not focus_char:
+        return edge_subset.copy()
+
+    undirected = nx.Graph()
+    undirected.add_edges_from(edge_subset[['char1', 'char2']].dropna().itertuples(index=False, name=None))
+
+    if focus_char not in undirected:
+        return edge_subset.copy()
+
+    visible_nodes = set(nx.single_source_shortest_path_length(undirected, focus_char, cutoff=depth).keys())
+    return edge_subset[
+        edge_subset['char1'].isin(visible_nodes) & edge_subset['char2'].isin(visible_nodes)
+    ].copy()
+
+
+@st.cache_data(show_spinner=False)
+def build_pair_network_html(edge_subset: pd.DataFrame, edge_color: str):
+    G = nx.DiGraph()
+    for _, row in edge_subset.iterrows():
+        G.add_edge(
+            row['char1'],
+            row['char2'],
+            title=" | ".join(
+                [
+                    str(row.get('Verb', '')),
+                    str(row.get('pinyin', '')),
+                    str(row.get('English_Verb', '')),
+                    str(row.get('tone_pattern', '')),
+                ]
+            ),
+            weight=int(row.get('weight', 1)),
+        )
+
+    degrees = dict(G.degree())
+    if degrees:
+        min_degree = min(degrees.values())
+        max_degree = max(degrees.values())
+    else:
+        min_degree, max_degree = 0, 1
+
+    if max_degree == min_degree:
+        normalized = {node: 18 for node in degrees}
+    else:
+        normalized = {
+            node: 14 + 12 * (deg - min_degree) / (max_degree - min_degree)
+            for node, deg in degrees.items()
+        }
+
+    net = Network(
+        height='620px',
+        width='100%',
+        notebook=False,
+        directed=True,
+        cdn_resources='remote',
+        select_menu=False,
+        filter_menu=False,
+        neighborhood_highlight=True,
+        bgcolor='#ffffff',
+        font_color='#0f172a',
+    )
+    net.set_options(
+        """
+        var options = {
+          "layout": {
+            "improvedLayout": true
+          },
+          "interaction": {
+            "hover": true,
+            "navigationButtons": true,
+            "keyboard": true,
+            "tooltipDelay": 120
+          },
+          "physics": {
+            "solver": "barnesHut",
+            "barnesHut": {
+              "gravitationalConstant": -4200,
+              "centralGravity": 0.08,
+              "springLength": 175,
+              "springConstant": 0.03,
+              "damping": 0.2,
+              "avoidOverlap": 0.9
+            },
+            "stabilization": {
+              "enabled": true,
+              "iterations": 160,
+              "fit": true
+            }
+          },
+          "edges": {
+            "smooth": {
+              "enabled": true,
+              "type": "continuous",
+              "roundness": 0.08
+            }
+          }
+        }
+        """
+    )
+
+    for node, size in normalized.items():
+        net.add_node(
+            node,
+            label=node,
+            title=node,
+            shape='circle',
+            size=size,
+            font={
+                'size': max(int(size) + 7, 22),
+                'color': '#0f172a',
+                'face': 'Noto Sans SC, Microsoft YaHei, SimHei, sans-serif',
+                'strokeWidth': 3,
+                'strokeColor': '#ffffff',
+            },
+            color={
+                'background': '#fff7cc',
+                'border': '#b45309',
+                'highlight': {'background': '#fef3c7', 'border': '#92400e'},
+                'hover': {'background': '#fef3c7', 'border': '#92400e'},
+            },
+            borderWidth=2,
+        )
+
+    for u, v, data in G.edges(data=True):
+        net.add_edge(
+            u,
+            v,
+            title=data.get('title', ''),
+            color={
+                'color': hex_to_rgba(edge_color, 0.38),
+                'highlight': edge_color,
+                'hover': edge_color,
+                'inherit': False,
+            },
+            width=1.8 + min(data.get('weight', 1), 3) * 0.4,
+            arrows='to',
+            length=170,
+        )
+
+    return net.generate_html(notebook=False)
+
 # ----------------------------
 # Tabs
 # ----------------------------
@@ -244,78 +397,92 @@ with TAB2:
         st.markdown(T['help_network_body'])
 
     st.markdown(T['network_desc'])
-    fade_unselected = st.checkbox(T['fade_unselected'], value=True)
 
     if edge_df_f.empty:
         st.warning(T['no_match_warning'])
     else:
-        # Build subgraph
-        G = nx.DiGraph()
-        for _, r in edge_df.iterrows():
-            # include all nodes for layout stability
-            if r['char1'] not in G:
-                G.add_node(r['char1'])
-            if r['char2'] not in G:
-                G.add_node(r['char2'])
-        for _, r in edge_df.iterrows():
-            show = (r['tone_pattern'] in selected_pairs and r['src_tone'] in selected_src and r['dst_tone'] in selected_dst)
-            if selected_cls and 'Classification_zh' in r and 'Classification_en' in r:
-                disp_col = 'cls_zh' if lang=='zh' else 'cls_en'
-            # Add edges regardless (to allow fading), but mark visibility
-            G.add_edge(r['char1'], r['char2'],
-                       tone_pair=r['tone_pattern'], src_tone=int(r['src_tone']), dst_tone=int(r['dst_tone']),
-                       weight=int(r['weight']),
-                       verb=r.get('Verb'), pinyin=r.get('pinyin'), english=r.get('English_Verb'),
-                       cls_zh=r.get('Classification_zh'), cls_en=r.get('Classification_en'),
-                       visible=show)
+        pair_rank = (
+            edge_df_f.groupby('tone_pattern', as_index=False)['weight']
+            .sum()
+            .sort_values('weight', ascending=False)
+        )
 
-        degrees = dict(G.degree())
-        min_d, max_d = (0, 1)
-        if degrees:
-            min_d = min(degrees.values()); max_d = max(degrees.values()) if max(degrees.values())>0 else 1
-        size_scale = {n: 12 + 24*(deg-min_d)/(max_d-min_d) if (max_d-min_d)>0 else 15 for n, deg in degrees.items()}
+        st.subheader(T['pair_priority_header'])
+        st.caption(T['pair_priority_desc'])
+        fig_pairs = px.bar(
+            pair_rank.head(12),
+            x='weight',
+            y='tone_pattern',
+            orientation='h',
+            text='weight',
+            color='tone_pattern',
+            color_discrete_map=pair_color,
+        )
+        fig_pairs.update_layout(yaxis={'categoryorder': 'total ascending'}, showlegend=False)
+        st.plotly_chart(fig_pairs, use_container_width=True)
 
-        net = Network(height='750px', width='100%', notebook=False, directed=True, cdn_resources='in_line', select_menu=True, filter_menu=True)
-        # Node groups by dominant tone for simple coloring when grouping in menu
-        node_tone = nx.get_node_attributes(G, 'tone')
-        for n in G.nodes():
-            tone = node_tone.get(n, None)
-            net.add_node(n, label=n, size=size_scale.get(n, 15), font={'size': int(size_scale.get(n, 15))+8}, group=str(tone) if tone else 'N/A')
+        focus_pair = st.selectbox(
+            T['pair_focus'],
+            options=pair_rank['tone_pattern'].tolist(),
+            index=0,
+        )
+        pair_df = edge_df_f[edge_df_f['tone_pattern'] == focus_pair].copy()
+        pair_graph = build_graph(pair_df)
+        disp_col = 'Classification_zh' if lang == 'zh' else 'Classification_en'
+        top_class = '—'
+        if disp_col in pair_df.columns and not pair_df[disp_col].dropna().empty:
+            top_class = pair_df[disp_col].value_counts().idxmax()
 
-        for u, v, d in G.edges(data=True):
-            color = pair_color.get(d['tone_pair'], '#cccccc')
-            width = 1 + (d.get('weight',1))
-            # Fade if not selected
-            if not d.get('visible'):
-                if fade_unselected:
-                    color = '#dddddd'
-                    width = 1
-                else:
-                    continue
-            title = f"{d.get('verb','')} ({d.get('pinyin','')})\n{d.get('english','')}\n{u}→{v}  [{d.get('tone_pair','')}]"
-            net.add_edge(u, v, title=title, color=color, width=width)
+        metric1, metric2, metric3 = st.columns(3)
+        metric1.metric(T['pair_count_metric'], int(pair_df['weight'].sum()))
+        metric2.metric(T['pair_char_count_metric'], int(pair_graph.number_of_nodes()))
+        metric3.metric(T['pair_top_class_metric'], top_class)
 
-        # Legend
-        legend_pairs = [tp for tp in selected_pairs][:12]
-        if legend_pairs:
-            legend_html = "<div style='padding:6px 0'>" + " ".join(
-                f"<span style='display:inline-flex;align-items:center;margin-right:10px'>"
-                f"<span style='width:12px;height:12px;background:{pair_color[tp]};display:inline-block;border-radius:2px;margin-right:6px'></span>{tp}</span>"
-                for tp in legend_pairs
-            ) + ("<span style='opacity:0.6;margin-left:8px'>…</span>" if len(selected_pairs)>12 else "") + "</div>"
-            st.markdown(f"**{T['legend_header']}:**", unsafe_allow_html=True)
-            st.markdown(legend_html, unsafe_allow_html=True)
+        st.subheader(T['pair_examples_header'])
+        st.caption(T['pair_examples_desc'])
+        pair_examples = pair_df[['Verb', 'pinyin', 'English_Verb', 'weight']].sort_values(
+            ['weight', 'Verb'], ascending=[False, True]
+        ).rename(columns={'weight': T['connections_col']})
+        st.dataframe(pair_examples.head(20), use_container_width=True, hide_index=True)
 
-        try:
-            file_path = 'tone_network.html'
-            net.save_graph(file_path)
-            with open(file_path, 'r', encoding='utf-8') as f:
-                source_code = f.read()
-            components.html(source_code, height=800)
-            if os.path.exists(file_path):
-                os.remove(file_path)
-        except Exception as e:
-            st.error(f"Error displaying graph: {e}")
+        st.subheader(T['pair_characters_header'])
+        st.caption(T['pair_characters_desc'])
+        char_counts = Counter(pair_df['char1'].dropna().tolist() + pair_df['char2'].dropna().tolist())
+        char_df = pd.DataFrame(
+            char_counts.most_common(12),
+            columns=[T['character_col'], T['connections_col']]
+        )
+        left_col, right_col = st.columns([1.1, 1.6])
+        with left_col:
+            st.dataframe(char_df, use_container_width=True, hide_index=True)
+
+        ranked_chars = sorted(pair_graph.nodes(), key=lambda node: (-pair_graph.degree(node), node))
+        focus_char = ranked_chars[0] if ranked_chars else None
+        focus_depth = 1
+        if ranked_chars:
+            with right_col:
+                st.subheader(T['pair_network_header'])
+                st.caption(T['pair_network_desc'])
+                control_a, control_b = st.columns([1.5, 1])
+                with control_a:
+                    focus_char = st.selectbox(T['pair_focus_char'], options=ranked_chars, index=0)
+                with control_b:
+                    focus_depth = st.radio(T['pair_focus_depth'], options=[1, 2], index=0, horizontal=True)
+
+            visible_pair_df = get_focus_network_df(pair_df, focus_char, focus_depth)
+            visible_pair_graph = build_graph(visible_pair_df)
+            st.caption(
+                T['network_summary'].format(
+                    nodes=visible_pair_graph.number_of_nodes(),
+                    edges=len(visible_pair_df),
+                    pair=focus_pair,
+                )
+            )
+            try:
+                pair_html = build_pair_network_html(visible_pair_df, pair_color.get(focus_pair, '#6366f1'))
+                components.html(pair_html, height=680)
+            except Exception as e:
+                st.error(f"Error displaying graph: {e}")
 
 # ----------------------------
 # TAB 3 – Tone Pathways

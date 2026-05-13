@@ -14,10 +14,11 @@ def page_header(title: str, emoji: str = "📄"):
     st.markdown(f"# {emoji} {title}")
 
 
-@st.cache_data(ttl=86400) # cash for one day
+@st.cache_data(ttl=86400, show_spinner=False) # cache for one day
 def load_data(local_csv="data/two_char_verbs_with_Tr_Pro_with_UMAP.csv",
               table_name="verbs",
-              use_local=False):
+              use_local=False,
+              show_status=False):
     """
     Load verbs data:
     - If use_local=True -> always load local CSV
@@ -26,7 +27,8 @@ def load_data(local_csv="data/two_char_verbs_with_Tr_Pro_with_UMAP.csv",
     if not use_local and "db_connection" in st.secrets and run_query is not None:
         try:
             df = run_query(f"SELECT * FROM {table_name};")
-            st.info("Loaded data from Neon database ✅")
+            if show_status:
+                st.info("Loaded data from Neon database ✅")
             return df
         except Exception as e:
             st.warning(f"Failed to query Neon DB: {e}\nFalling back to local CSV.")
@@ -34,9 +36,9 @@ def load_data(local_csv="data/two_char_verbs_with_Tr_Pro_with_UMAP.csv",
     # Local CSV fallback
     try:
         df = pd.read_csv(local_csv)
-        st.info("Loaded data from local CSV ✅")
+        if show_status:
+            st.info("Loaded data from local CSV ✅")
         return df
     except FileNotFoundError:
         st.error("Local CSV not found. Please add it to your project folder.")
         return pd.DataFrame()  # empty DataFrame
-
