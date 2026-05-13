@@ -4,6 +4,12 @@ import pandas as pd
 from db import run_query
 
 
+LANG_OPTIONS = {"English": "en", "中文 (Chinese)": "zh"}
+LANG_DISPLAY_BY_CODE = {code: label for label, code in LANG_OPTIONS.items()}
+LANG_STATE_KEY = "app_language"
+LANG_WIDGET_KEY = "_app_language_widget"
+
+
 # @st.cache_data(ttl=86400)  # cache for 1 day
 # def cached_query(query_func, query: str):
 #     """Run a query with caching wrapper."""
@@ -12,6 +18,34 @@ from db import run_query
 def page_header(title: str, emoji: str = "📄"):
     """Reusable page header with emoji."""
     st.markdown(f"# {emoji} {title}")
+
+
+def language_selector(
+    header: str = "⚙️ Settings / 设置",
+    label: str = "Select Language / 选择语言",
+):
+    """Persist language choice across Streamlit multipage navigation."""
+    if LANG_STATE_KEY not in st.session_state:
+        st.session_state[LANG_STATE_KEY] = "en"
+
+    current_lang = st.session_state.get(LANG_STATE_KEY, "en")
+    current_display = LANG_DISPLAY_BY_CODE.get(current_lang, "English")
+    st.session_state[LANG_WIDGET_KEY] = current_display
+
+    def sync_language():
+        selected_display = st.session_state.get(LANG_WIDGET_KEY, "English")
+        st.session_state[LANG_STATE_KEY] = LANG_OPTIONS.get(selected_display, "en")
+
+    st.sidebar.header(header)
+    st.sidebar.radio(
+        label,
+        options=list(LANG_OPTIONS.keys()),
+        key=LANG_WIDGET_KEY,
+        horizontal=True,
+        on_change=sync_language,
+    )
+    sync_language()
+    return st.session_state[LANG_STATE_KEY]
 
 
 @st.cache_data(ttl=86400, show_spinner=False) # cache for one day

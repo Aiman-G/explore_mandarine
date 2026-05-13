@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from utils import page_header, load_data
+from utils import page_header, load_data, language_selector
 from pyvis.network import Network
 import networkx as nx
 import streamlit.components.v1 as components
@@ -408,10 +408,7 @@ def build_network_html(
 # ----------------------------
 # Sidebar
 # ----------------------------
-st.sidebar.header("⚙️ Settings / 设置")
-lang_options = {'English': 'en', '中文 (Chinese)': 'zh'}
-selected_lang_display = st.sidebar.radio("Select Language / 选择语言", options=lang_options.keys(), horizontal=True)
-lang = lang_options[selected_lang_display]
+lang = language_selector()
 T = translations[lang]
 
 page_header(T['page_title'], "🕸️")

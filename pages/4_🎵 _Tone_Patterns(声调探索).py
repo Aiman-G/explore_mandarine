@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
-from utils import page_header, load_data
+from utils import page_header, load_data, language_selector
 from pyvis.network import Network
 import networkx as nx
 import os
@@ -101,11 +101,57 @@ div[data-testid="stExpander"] > details > summary:focus{
 # ----------------------------
 # Sidebar: language and header
 # ----------------------------
-st.sidebar.header("⚙️ Settings / 设置")
-lang_options = {'English': 'en', '中文 (Chinese)': 'zh'}
-selected_lang_display = st.sidebar.radio("Select Language / 选择语言", options=lang_options.keys(), horizontal=True)
-lang = lang_options[selected_lang_display]
-T = TX[lang]
+lang = language_selector()
+
+PAGE_FALLBACKS = {
+    'en': {
+        'pair_priority_header': "Most Useful Tone Pairs",
+        'pair_priority_desc': "Start with the most frequent tone transitions in the current filter.",
+        'pair_focus': "Focus Tone Pair",
+        'pair_count_metric': "Verbs",
+        'pair_char_count_metric': "Characters",
+        'pair_top_class_metric': "Main Class",
+        'pair_examples_header': "High-Value Examples",
+        'pair_examples_desc': "These verbs are good starting examples for the selected tone pair.",
+        'pair_characters_header': "Best Starter Characters",
+        'pair_characters_desc': "These characters connect to the most verbs inside the selected tone pair.",
+        'pair_network_header': "Focused Tone-Pair Network",
+        'pair_network_desc': "Explore a small neighborhood instead of the full graph.",
+        'pair_focus_char': "Center Character",
+        'pair_focus_depth': "Neighborhood Depth",
+        'network_summary': "Showing {nodes} characters and {edges} verbs for tone pair {pair}.",
+        'character_col': "Character",
+        'connections_col': "Connections",
+        'tab_network': "🎯 Tone-Pair Explorer",
+    },
+    'zh': {
+        'pair_priority_header': "最值得先学的声调模式",
+        'pair_priority_desc': "先从当前筛选中最常见的声调转移开始。",
+        'pair_focus': "聚焦声调模式",
+        'pair_count_metric': "动词数",
+        'pair_char_count_metric': "汉字数",
+        'pair_top_class_metric': "主要类别",
+        'pair_examples_header': "高价值例词",
+        'pair_examples_desc': "这些动词适合作为该声调模式的起步例词。",
+        'pair_characters_header': "最佳起步汉字",
+        'pair_characters_desc': "这些汉字在所选声调模式中连接的动词最多。",
+        'pair_network_header': "聚焦式声调网络",
+        'pair_network_desc': "不要看整张大网，只看一个小范围邻域更适合学习。",
+        'pair_focus_char': "中心汉字",
+        'pair_focus_depth': "邻域层级",
+        'network_summary': "当前展示声调模式 {pair} 下的 {nodes} 个汉字、{edges} 个动词。",
+        'character_col': "汉字",
+        'connections_col': "连接数",
+        'tab_network': "🎯 声调模式探索",
+    },
+}
+
+T = {
+    **PAGE_FALLBACKS['en'],
+    **TX.get('en', {}),
+    **PAGE_FALLBACKS.get(lang, {}),
+    **TX.get(lang, {}),
+}
 
 page_header(T['page_title'], "🎵")
 
